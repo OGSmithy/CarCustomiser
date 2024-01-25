@@ -21,38 +21,27 @@ struct ContentView: View {
     @State private var superchargerPackage = false
     @State private var absPackage = false
     @State private var remainingFunds = 1000
+    @State private var remainingTime = 30
     
     var exhaustPackageEnabled: Bool {
-        if remainingFunds >= 500 {
-            return true
-        } else  {
-            return false
-        }
+        return exhaustPackage ? true : remainingFunds >= 500 ? true : false
+        
+        
     }
     var tiresPackageEnabled: Bool {
-        if remainingFunds >= 500 {
-            return true
-        } else  {
-            return false
-        }
+        return tiresPackage ? true : remainingFunds >= 500 ? true : false
     }
     var superchargerPackageEnabled: Bool {
-        if remainingFunds >= 500 {
-            return true
-        } else  {
-            return false
-        }    }
+        return superchargerPackage ? true : remainingFunds >= 500 ? true : false
+    }
     var absPackageEnabled: Bool {
-        if remainingFunds >= 1000 {
-            return true
-        } else  {
-            return false
-        }
+        return absPackage ? true : remainingFunds >= 1000 ? true : false
     }
     
+    let timer = Timer.publish(every: 1, on: .main, in: .common)
     
     var body: some View {
-        let exhaustPackageBinding = Binding<Bool> (
+        var exhaustPackageBinding = Binding<Bool> (
             get : { self.exhaustPackage },
             set : { newValue in
                 self.exhaustPackage = newValue
@@ -61,12 +50,13 @@ struct ContentView: View {
                     remainingFunds -= 500
                 } else {
                     starterCars.cars[selectedCar].topSpeed -= 5
+                    remainingFunds += 500
                 }
                 
             }
         )
-        let tiresPackageBinding = Binding<Bool> (
-            get : {self.exhaustPackage },
+        var tiresPackageBinding = Binding<Bool> (
+            get : {self.tiresPackage },
             set : { newValue in
                 self.tiresPackage = newValue
                 if newValue == true {
@@ -74,10 +64,11 @@ struct ContentView: View {
                     remainingFunds -= 500
                 } else {
                     starterCars.cars[selectedCar].handeling -= 2
+                    remainingFunds += 500
                 }
             }
         )
-        let superchargerPackageBinding = Binding<Bool> (
+        var superchargerPackageBinding = Binding<Bool> (
             get : { self.superchargerPackage },
             set : { newValue in self.superchargerPackage = newValue
                 if newValue == true {
@@ -85,10 +76,11 @@ struct ContentView: View {
                     remainingFunds -= 500
                 } else {
                     starterCars.cars[selectedCar].acceleration += 0.3
+                    remainingFunds += 500
                 }
             }
         )
-        let absPackageBinding = Binding<Bool> (
+        var absPackageBinding = Binding<Bool> (
             get : { self.absPackage },
             set : { newValue in self.absPackage = newValue
                 if newValue == true {
@@ -96,10 +88,23 @@ struct ContentView: View {
                     remainingFunds -= 1000
                 } else {
                     starterCars.cars[selectedCar].handeling -= 1
+                    remainingFunds += 1000
                 }
             }
         )
         VStack {
+            Text("\(remainingTime)")
+                .onReceive(timer) { _ in
+                    if self.remainingTime > 0 {
+                        self.remainingTime -= 1
+                    } else if self.remainingTime == 0 {
+                        exhaustPackageBinding = false
+                        tiresPackageBinding = false
+                        superchargerPackageBinding = false
+                        absPackageBinding = false
+                    }
+                }
+                .foregroundColor(.red)
             Form {
                 
                 VStack(alignment: .leading, spacing: 20) {
